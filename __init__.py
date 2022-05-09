@@ -14,27 +14,29 @@ bl_info = {
 import os
 import bpy
 from VisIt.preferences import VisItPreferences
+from VisIt import lib
 from VisIt.lib import custom_props_utils
 from VisIt import ops
 from VisIt import ui
 
 classes = [
     VisItPreferences,
+    *lib.classes,
     *ops.classes,
     *ui.classes
 ]
 
 def register():
-    custom_props_utils.add_custom_props()
-
     for cls in classes:
         bpy.utils.register_class(cls)
 
-def unregister():
-    custom_props_utils.delete_custom_props()
+    custom_props_utils.add_custom_props()
 
+def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
+
+    custom_props_utils.delete_custom_props()
 
 def main():
     try:

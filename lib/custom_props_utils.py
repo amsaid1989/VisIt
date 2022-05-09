@@ -1,15 +1,17 @@
 import bpy
+from VisIt.lib.collection_props import InitialisedScenesItem
 
 _types = {
     "string": bpy.props.StringProperty,
-    "int": bpy.props.IntProperty
+    "int": bpy.props.IntProperty,
+    "bool": bpy.props.BoolProperty,
+    "collection": bpy.props.CollectionProperty
 }
 
-_prop_names = []
-_prop_values = {}
+_prop_names = {}
 
-def _create_prop(prop_name, prop_type, **kwargs):
-    """Create and register a custom prop on all relevant Blender data types"""
+def _create_prop(blender_ID, prop_name, prop_type, **kwargs):
+    """Create and register a custom prop on a Blender ID data type"""
 
     if prop_type not in _types:
         """
@@ -17,95 +19,83 @@ def _create_prop(prop_name, prop_type, **kwargs):
         """
         return
     
-    if prop_name in _prop_names:
+    if blender_ID in _prop_names and prop_name in _prop_names[blender_ID]:
         """
         TODO (Abdelrahman): Raise an appropriate exception here
         """
         return
     
-    def on_wm_prop_update(self, context):
-        sync_all_scenes_with_win_manager(context)
-    
-    def on_scene_prop_update(self, context):
-        sync_win_manager_with_scene(context)
+    if blender_ID not in _prop_names:
+        _prop_names[blender_ID] = []
 
-    _prop_names.append(prop_name)
+    _prop_names[blender_ID].append(prop_name)
 
-    if "update" in kwargs:
-        kwargs.pop("update")
-    
-    scene_prop = setattr(
-        bpy.types.Scene,
+    setattr(
+        blender_ID,
         prop_name,
-        _types[prop_type](**kwargs, update=on_scene_prop_update)
-    )
-    wm_prop = setattr(
-        bpy.types.WindowManager,
-        prop_name,
-        _types[prop_type](**kwargs, update=on_wm_prop_update)
+        _types[prop_type](**kwargs)
     )
 
-    _prop_values[prop_name] = {
-        "scene": scene_prop,
-        "wm": wm_prop
-    }
-
-def _remove_prop(prop_name):
+def _remove_prop(blender_ID, prop_name):
     """Delete and unregister a custom prop"""
 
-    if prop_name not in _prop_names:
+    if blender_ID not in _prop_names or prop_name not in _prop_names[blender_ID]:
         """
         TODO (Abdelrahman): Raise an appropriate exception here
         """
         return
 
-    _prop_names.remove(prop_name)
-    _prop_values.pop(prop_name)
+    _prop_names[blender_ID].remove(prop_name)
 
-    delattr(bpy.types.Scene, prop_name)
-    delattr(bpy.types.WindowManager, prop_name)
+    delattr(blender_ID, prop_name)
 
 def _remove_all_props():
     """Delete and unregister all custom props"""
 
-    for prop_name in _prop_names:
-        delattr(bpy.types.Scene, prop_name)
-        delattr(bpy.types.WindowManager, prop_name)
+    for blender_ID in _prop_names:
+        for prop_name in _prop_names[blender_ID]:
+            delattr(blender_ID, prop_name)
     
     _prop_names.clear()
-    _prop_values.clear()
-
-def sync_all_scenes_with_win_manager(context):
-    """
-    Make sure all scenes have the same values for the custom props
-    by getting the value of each prop from the window manager
-    """
-
-    for scene in bpy.data.scenes:
-        for prop_name in _prop_names:
-            scene_value = getattr(scene, prop_name)
-            wm_value = getattr(context.window_manager, prop_name)
-
-            if scene_value != wm_value:
-                setattr(scene, prop_name, wm_value)
-
-def sync_win_manager_with_scene(context):
-    """
-    Update all custom props' values in the window manager using
-    the values of the current scene
-    """
-
-    for prop_name in _prop_names:
-        scene_value = getattr(context.scene, prop_name)
-        wm_value = getattr(context.window_manager, prop_name)
-
-        if wm_value != scene_value:
-            setattr(context.window_manager, prop_name, scene_value)
 
 def add_custom_props():
     """Create all the required custom props"""
 
     _create_prop(
+        bpy.types.WindowManager,
+        "initialised_scenes",
+        "collection",
+        type=InitialisedScenesItem,
+        name="Initialised scenes",
+        description="A collection of all the initialised scenes in the file",
+    )
+    _create_prop(
+        bpy.types.WindowManager,
+        "scene_selection_index",
+        "int",
+        name="Scene selection index",
+        description="Store the index of the selected scene in the UI list",
+        min=0,
+        step=1,
+    )
+    _create_prop(
+        bpy.types.Scene,
+        "initialised",
+        "bool",
+        name="Initialised",
+        description="Define whether the scene is a VisIt initialised scene or not",
+        default=False
+    )
+    _create_prop(
+        bpy.types.Scene,
+        "render_scene",
+        "bool",
+        name="Render scene",
+        description="Toggle scene in renders",
+        default=True
+    )
+    _create_prop(
+        bpy.types.Scene,
         "scene_prefix",
         "string",
         name="Scene prefix",
@@ -113,6 +103,7 @@ def add_custom_props():
         default="sc"
     )
     _create_prop(
+        bpy.types.Scene,
         "scene_padding",
         "int",
         name="Scene name padding",
@@ -123,6 +114,7 @@ def add_custom_props():
         default=1
     )
     _create_prop(
+        bpy.types.Scene,
         "shot_prefix",
         "string",
         name="Shot prefix",
@@ -130,6 +122,7 @@ def add_custom_props():
         default="sh"
     )
     _create_prop(
+        bpy.types.Scene,
         "shot_padding",
         "int",
         name="Shot name padding",
@@ -140,6 +133,7 @@ def add_custom_props():
         default=1
     )
     _create_prop(
+        bpy.types.Scene,
         "render_dir",
         "string",
         name="Render directory",
@@ -147,6 +141,7 @@ def add_custom_props():
         subtype='DIR_PATH',
     )
     _create_prop(
+        bpy.types.Scene,
         "frame_padding",
         "int",
         name="Frame padding",

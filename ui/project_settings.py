@@ -46,6 +46,9 @@ class ProjectSettings(bpy.types.Panel):
 
         layout = self.layout
 
+        row = layout.row()
+        row.operator("vis_it.initialise_project")
+
         box = layout.box()
         box.label(text="Scene settings", icon='SCENE_DATA')
         box.prop(scene, "scene_prefix")
