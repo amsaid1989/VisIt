@@ -170,6 +170,23 @@ def add_custom_props():
         step=1,
         default=1
     )
+    _create_prop(
+        bpy.types.Scene,
+        "camera_selection_index",
+        "int",
+        name="Camera index",
+        description="Store the index of the selected camera in the UI list",
+        min=0,
+        step=1
+    )
+    _create_prop(
+        bpy.types.Camera,
+        "render_camera",
+        "bool",
+        name="Render camera",
+        description="Toggle camera in renders",
+        default=True
+    )
 
 def delete_custom_props():
     """Delete all the existing custom props"""

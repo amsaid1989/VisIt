@@ -34,6 +34,3 @@ class RenderManager(bpy.types.Panel):
         row = layout.row()
         render = row.operator("vis_it.render_all_cams")
         render.frame_padding = context.scene.frame_padding
-
-        row = layout.row()
-        row.prop(context.scene, "render_progress")

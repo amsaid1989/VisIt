@@ -50,14 +50,12 @@ def register():
         bpy.utils.register_class(cls)
 
     custom_props_utils.add_custom_props()
-    bpy.types.Scene.render_progress = bpy.props.FloatProperty(name="progress", subtype='PERCENTAGE', min=0, max=100)
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
     custom_props_utils.delete_custom_props()
-    del bpy.types.Scene.render_progress
 
 def main():
     try:
